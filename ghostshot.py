@@ -6,7 +6,7 @@
    Discovers active HTTP/HTTPS services on a local network range,
    captures screenshots of each service, and generates an HTML triage report.
 
- AUTHOR:      For Educational & Authorized Testing Use Only
+ AUTHOR:  Topshugar    For Educational & Authorized Testing Use Only
  USAGE:       python3 ghostshot.py 192.168.1.1-20
  OUTPUT:      ./shots/ + ./report.html
 
