@@ -1,6 +1,16 @@
-# GhostShot - Mini EyeWitness Clone
-# For EDUCATIONAL use on YOUR OWN network only
-# Usage: python3 ghostshot.py 192.168.1.1-20
+"""
+
+ GhostShot - Local Network Web Service Mapper
+
+ DESCRIPTION:
+   Discovers active HTTP/HTTPS services on a local network range,
+   captures screenshots of each service, and generates an HTML triage report.
+
+ AUTHOR:      For Educational & Authorized Testing Use Only
+ USAGE:       python3 ghostshot.py 192.168.1.1-20
+ OUTPUT:      ./shots/ + ./report.html
+
+"""
 
 import socket
 import subprocess
@@ -8,6 +18,10 @@ import os
 import sys
 from datetime import datetime
 
+# ============================================================================
+# SECTION 1: NETWORK SCANNING
+# Purpose: Verify if a specific TCP port is open on a target host.
+# ============================================================================
 def scan_port(ip, port):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,21 +29,28 @@ def scan_port(ip, port):
         result = s.connect_ex((ip, port))
         s.close()
         return result == 0
-    except:
+    except Exception:
         return False
 
+# ============================================================================
+# SECTION 2: SCREENSHOT CAPTURE
+# Purpose: Capture a visual snapshot of a web service using headless Chromium.
+# ============================================================================
 def take_screenshot(url, output):
     try:
-        # Uses chromium headless - already in Kali
         subprocess.run(
             ["chromium", "--headless", "--disable-gpu", "--no-sandbox",
              f"--screenshot={output}", "--window-size=1200,800", "--timeout=10000", url],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15
         )
         return os.path.exists(output)
-    except:
+    except Exception:
         return False
 
+# ============================================================================
+# SECTION 3: MAIN EXECUTION
+# Purpose: Parse range, scan hosts, capture evidence, compile HTML report.
+# ============================================================================
 def main():
     if len(sys.argv) < 2:
         print("Usage: python3 ghostshot.py 192.168.1.1-20")
@@ -59,13 +80,16 @@ def main():
                 else:
                     results.append((ip, port, url, None))
 
-    # Build HTML Report like EyeWitness
+    # ========================================================================
+    # SECTION 4: REPORT GENERATION
+    # Purpose: Compile all findings into a single interactive HTML report.
+    # ========================================================================
     html = f"""
     <html><head><title>GhostShot Report</title>
     <style>body{{background:#0f172a;color:white;font-family:Arial;padding:20px}}
     .card{{background:#1e293b;padding:15px;margin:15px;border-radius:12px}}
     img{{width:100%;border-radius:8px}}</style></head>
-    <body><h1>👁️ GhostShot Report</h1>
+    <body><h1>GhostShot Report</h1>
     <p>Generated: {datetime.now()} | Targets: {len(results)}</p>
     """
     for ip, port, url, shot in results:
