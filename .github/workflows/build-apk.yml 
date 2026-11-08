@@ -1,0 +1,134 @@
+name: Build GhostShot APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
+      - name: Create Android WebView Project
+        run: |
+          mkdir -p app/src/main/java/com/topshugar/ghostshot
+          mkdir -p app/src/main/assets
+          # Only copy web files, NOT the whole repo
+          cp index.html app/src/main/assets/index.html || echo "index.html not found"
+          cp style.css app/src/main/assets/style.css 2>/dev/null || true
+          cp script.js app/src/main/assets/script.js 2>/dev/null || true
+          cp app.js app/src/main/assets/app.js 2>/dev/null || true
+          cp manifest.json app/src/main/assets/manifest.json 2>/dev/null || true
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+            repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "GhostShot"
+          include ':app'
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+            id 'com.android.application' version '8.2.2' apply false
+          }
+          EOF
+
+          cat > app/build.gradle <<'EOF'
+          plugins {
+            id 'com.android.application'
+          }
+          android {
+            namespace 'com.topshugar.ghostshot'
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.topshugar.ghostshot"
+              minSdk 24
+              targetSdk 34
+              versionCode 1
+              versionName "1.0"
+            }
+            buildTypes {
+              release { minifyEnabled false }
+            }
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_17
+              targetCompatibility JavaVersion.VERSION_17
+            }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <application
+              android:allowBackup="true"
+              android:label="GhostShot"
+              android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+              <activity android:name=".MainActivity" android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN" />
+                  <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/java/com/topshugar/ghostshot/MainActivity.java <<'EOF'
+          package com.topshugar.ghostshot;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          public class MainActivity extends Activity {
+            @Override
+            protected void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              WebView web = new WebView(this);
+              WebSettings s = web.getSettings();
+              s.setJavaScriptEnabled(true);
+              s.setDomStorageEnabled(true);
+              web.setWebViewClient(new WebViewClient());
+              web.loadUrl("file:///android_asset/index.html");
+              setContentView(web);
+            }
+          }
+          EOF
+
+      - name: Build APK with Gradle
+        run: gradle assembleDebug --stacktrace
+
+      - name: Upload APK to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: GhostShot v1.0.${{ github.run_number }}
+          files: app/build/outputs/apk/debug/app-debug.apk
+          body: "GhostShot APK - Install on Android. Built from mobile web."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
