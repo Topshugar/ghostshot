@@ -1,59 +1,342 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GhostShot - Network Defender</title>
+<title>GhostShot Defender - WiFi Security Audit</title>
 <style>
-body{background:#0a0f1e;color:#fff;font-family:Arial;padding:16px}
-.card{background:#111a33;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2a3a6a}
-h1{color:#00ff9d;text-align:center}
-button{background:#00ff9d;color:#000;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:10px}
-code{background:#000;padding:6px 10px;border-radius:6px;display:block;margin-top:8px}
-label{display:block;margin:10px 0}
-.score{font-size:42px;text-align:center;color:#00ff9d}
+  /* GHOSTSHOT DEFENDER - UI STYLES
+     All logic runs 100% locally. No data leaves device. */
+  *{box-sizing:border-box}
+  body{font-family:Arial,system-ui,sans-serif;background:#0a0f1e;color:#fff;padding:16px;margin:0}
+  .card{background:#111a33;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2a3a6a}
+  h1{color:#00ff9d;text-align:center;font-size:24px;margin:10px 0 4px}
+  h2{color:#00ff9d;font-size:18px;margin:0 0 10px}
+  .subtitle{text-align:center;color:#ccc;font-size:13px;margin-bottom:16px}
+  button{background:#00ff9d;color:#000;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:10px;cursor:pointer}
+  button.secondary{background:#2a3a6a;color:#fff}
+  button:active{opacity:.85}
+  input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #2a3a6a;background:#0a0f1e;color:#fff;margin-top:8px;font-size:15px}
+  textarea{min-height:70px;resize:vertical}
+  .score{font-size:48px;text-align:center;color:#00ff9d;font-weight:bold;margin:10px 0 4px}
+  label{display:block;margin:10px 0;font-size:15px;line-height:1.4}
+  label input{width:auto;margin-right:8px;accent-color:#00ff9d}
+  small{color:#aaa;line-height:1.5;display:block}
+  code{background:#000;padding:8px 10px;border-radius:6px;display:block;margin-top:8px;font-size:13px;word-break:break-all}
+  .mono{font-family:monospace;font-size:16px;word-break:break-all;background:#000;padding:12px;border-radius:8px;text-align:center;letter-spacing:1px}
+  .pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold}
+  .pill-green{background:#00ff9d;color:#000}
+  .pill-yellow{background:#ffcc00;color:#000}
+  .pill-red{background:#ff4444;color:#fff}
+  .row{display:flex;gap:8px}
+  .row button{flex:1}
+  .hidden{display:none}
+  @media print{
+    body{background:#fff;color:#000;padding:0}
+    .no-print{display:none !important}
+    .card{border:1px solid #000;background:#fff;color:#000;break-inside:avoid}
+    h1,h2,.score{color:#000 !important}
+    #printArea{display:block !important}
+  }
 </style>
 </head>
 <body>
-<h1>🛡️ GHOSTSHOT</h1>
-<p style="text-align:center">Local Network Web Service Mapper<br>By Topshugar | For Authorized Testing Only</p>
 
-<div class="card">
-<h2>What GhostShot Does</h2>
-<p>Discovers active web services on YOUR local network, captures screenshots, and builds a report.</p>
-<p><b>Usage in Termux / Kali:</b></p>
-<code>python3 ghostshot.py 192.168.1.1-20</code>
-<p><b>Output:</b> ./shots/ + ./report.html</p>
-<p><b>Ports scanned:</b> 80, 443, 8080, 8000</p>
+<h1 class="no-print">🛡️ GHOSTSHOT DEFENDER</h1>
+<p class="subtitle no-print">WiFi Security Audit — For Your Own Network Only<br>All checks run locally. No password is sent online.</p>
+
+<!-- SECTION 1: WI-FI AUDIT
+     Score = (checked / 7) * 100 -->
+<div class="card no-print">
+  <h2>1. WiFi Audit</h2>
+  <label><input type="checkbox" id="c1"> WPA3 or WPA2/WPA3 is ON <small>WPA3 fixes offline dictionary attacks.</small></label>
+  <label><input type="checkbox" id="c2"> WPS is OFF / Disabled <small>WPS PIN can be brute-forced in hours.</small></label>
+  <label><input type="checkbox" id="c3"> Default admin password changed <small>Default = admin/admin.</small></label>
+  <label><input type="checkbox" id="c4"> WiFi password is 16+ characters <small>Length is #1 defence.</small></label>
+  <label><input type="checkbox" id="c5"> Firmware is updated <small>Old firmware = known CVEs.</small></label>
+  <label><input type="checkbox" id="c6"> Remote Management is OFF <small>If ON, anyone can try to login to router.</small></label>
+  <label><input type="checkbox" id="c7"> Guest WiFi is separate <small>Guests should never be on main network.</small></label>
+  <button onclick="calcScore()">CALCULATE MY SCORE</button>
+  <div class="score" id="score">-- / 100</div>
+  <p id="result" style="text-align:center"></p>
+  <p id="scoreDetail" style="text-align:center"><small></small></p>
 </div>
 
-<div class="card">
-<h2>WiFi Defense Audit</h2>
-<label><input type="checkbox" id="c1"> WPA3 or WPA2/WPA3 is ON</label>
-<label><input type="checkbox" id="c2"> WPS is OFF</label>
-<label><input type="checkbox" id="c3"> Default admin password changed</label>
-<label><input type="checkbox" id="c4"> WiFi password is 16+ characters</label>
-<label><input type="checkbox" id="c5"> Firmware updated</label>
-<label><input type="checkbox" id="c6"> Remote Management OFF</label>
-<label><input type="checkbox" id="c7"> Guest WiFi separate</label>
-<button onclick="calc()">CALCULATE MY SCORE</button>
-<div class="score" id="score">-- / 100</div>
-<p id="result" style="text-align:center"></p>
+<!-- SECTION 2: PASSWORD TESTER
+     Accurate: Entropy = length * log2(poolSize)
+     Pool: lower=26, upper=26, digits=10, symbols=33
+     NIST SP 800-63B method -->
+<div class="card no-print">
+  <h2>2. WiFi Password Tester</h2>
+  <input type="password" id="pass" placeholder="Type your WiFi password to test" autocomplete="off">
+  <div class="row">
+    <button onclick="testPass()">TEST STRENGTH</button>
+    <button class="secondary" onclick="togglePass()">SHOW / HIDE</button>
+  </div>
+  <p id="passResult"></p>
+  <p id="passEntropy"><small></small></p>
+  <small>Tested 100% offline. Password never leaves device.</small>
 </div>
 
-<div class="card">
-<h2>How To Use This Repo</h2>
-<p><b>1. For Termux users:</b> Download ghostshot.py and run the command above on YOUR OWN WiFi only.</p>
-<p><b>2. For Clients:</b> Use the Audit above, then open report.html after a scan.</p>
-<p style="color:#ffcc00">⚠️ Only scan networks you own or have written permission to test. Scanning others without permission is illegal.</p>
+<!-- SECTION 3: PASSWORD GENERATOR
+     Uses crypto.getRandomValues() - CSPRNG
+     NEVER Math.random() - predictable -->
+<div class="card no-print">
+  <h2>3. Secure Password Generator</h2>
+  <label>Length:
+    <select id="genLength">
+      <option value="12">12 characters - Minimum</option>
+      <option value="16" selected>16 characters - Recommended for WiFi</option>
+      <option value="20">20 characters - High Security</option>
+      <option value="24">24 characters - Maximum</option>
+    </select>
+  </label>
+  <div class="mono" id="generatedPass">Tap GENERATE below</div>
+  <div class="row">
+    <button onclick="generatePassword()">GENERATE SECURE PASSWORD</button>
+    <button class="secondary" onclick="copyPassword()">COPY</button>
+  </div>
+  <p id="copyMsg" style="text-align:center"><small></small></p>
+  <small>Generated with crypto.getRandomValues() - cryptographically secure.</small>
+</div>
+<!-- SECTION 4: LOCALHOST CHECK
+     Checklist only. Browsers cannot scan ports.
+     User must verify in Termux. -->
+<div class="card no-print">
+  <h2>4. GhostShot Localhost Check</h2>
+  <p>Run this in Termux to check your phone:</p>
+  <code>python3 ghostshot.py</code>
+  <p style="margin-top:12px">Check these ports are CLOSED if you don't need them:</p>
+  <p>• <b>22 SSH</b> - Only if you use SSH<br>• <b>80 HTTP</b> - Old web server<br>• <b>8080 / 8000</b> - Test servers<br>• <b>5555 ADB</b> - <span style="color:#ff4444">If OPEN, turn off USB Debugging NOW!</span></p>
+  <small>ADB on 5555 = anyone on your WiFi can control your phone.</small>
+</div>
+
+<!-- SECTION 5: CLIENT REPORT
+     Collects info + score + builds print-only report -->
+<div class="card no-print">
+  <h2>5. Client Report</h2>
+  <input id="client" placeholder="Client Name / Shop Name *">
+  <input id="router" placeholder="Router Model e.g TP-Link Archer C6, MTN 5G">
+  <input id="location" placeholder="Location / Address">
+  <textarea id="notes" placeholder="Technician Notes e.g Changed admin password, Disabled WPS, Updated firmware"></textarea>
+  <label><input type="checkbox" id="includePass"> Include generated password in report (only if client asked)</label>
+  <button onclick="buildReport()">BUILD PROFESSIONAL REPORT</button>
+  <small>Report will include Score + Checklist + Fixes. Give to client as proof of work.</small>
+</div>
+
+<!-- PRINT AREA - Hidden on screen, visible only when printing -->
+<div id="printArea" class="hidden">
+  <div style="border:2px solid #000;padding:20px;font-family:Arial;color:#000;background:#fff">
+    <h1 style="color:#000;text-align:center;margin:0">🛡️ GHOSTSHOT DEFENDER</h1>
+    <p style="text-align:center;margin:4px 0">WiFi Security Audit Report</p>
+    <hr>
+    <p><b>Client:</b> <span id="rClient"></span><br>
+    <b>Router:</b> <span id="rRouter"></span><br>
+    <b>Location:</b> <span id="rLocation"></span><br>
+    <b>Date:</b> <span id="rDate"></span><br>
+    <b>Audited By:</b> Topshugar | GhostShot</p>
+    <hr>
+    <h2 style="color:#000">Security Score: <span id="rScore"></span> / 100</h2>
+    <p id="rVerdict"></p>
+    <h3>Checklist Result:</h3>
+    <div id="rChecklist"></div>
+    <h3>Action Required (Unchecked Items):</h3>
+    <div id="rActions"></div>
+    <div id="rPassBlock" style="display:none">
+      <h3>New Secure WiFi Password:</h3>
+      <p style="font-family:monospace;font-size:18px;border:1px dashed #000;padding:10px" id="rPass"></p>
+      <p><small>Change WiFi password to this immediately. Do not share publicly.</small></p>
+    </div>
+    <h3>Technician Notes:</h3>
+    <p id="rNotes"></p>
+    <hr>
+    <p><small>Disclaimer: This audit checks basic WiFi hardening settings only. It does not guarantee protection against all attacks. Only audit networks you own or have written permission to test. | Generated locally by GhostShot Defender - No data sent online.</small></p>
+    <br><br>
+    <p>Technician Signature: ______________________ &nbsp;&nbsp;&nbsp; Client Signature: ______________________</p>
+  </div>
+  <button class="no-print" onclick="window.print()" style="margin-top:12px">DOWNLOAD / PRINT THIS REPORT</button>
+  <button class="no-print secondary" onclick="backToApp()">BACK TO APP</button>
 </div>
 
 <script>
-function calc(){
-  let ids=['c1','c2','c3','c4','c5','c6','c7'];
-  let count=0; ids.forEach(id=>{ if(document.getElementById(id).checked) count++; });
-  let score=Math.round((count/7)*100);
-  document.getElementById('score').innerText=score+' / 100';
-  document.getElementById('result').innerText = score>=85 ? '✅ SAFE - Well protected' : score>=50 ? '⚠️ MEDIUM RISK - Fix unchecked items' : '🚨 HIGH RISK - Fix now';
+/* GLOBAL STATE - stores last score for Report */
+let lastScore = null;
+let lastVerdict = "";
+let lastUnchecked = [];
+
+/* calcScore() - Score = (checked / 7) * 100
+   85+ = SAFE, 50-84 = MEDIUM, 0-49 = HIGH RISK */
+function calcScore(){
+  const checks = [
+    {id:'c1', label:'WPA3 or WPA2/WPA3 is ON'},
+    {id:'c2', label:'WPS is OFF / Disabled'},
+    {id:'c3', label:'Default admin password changed'},
+    {id:'c4', label:'WiFi password is 16+ characters'},
+    {id:'c5', label:'Firmware is updated'},
+    {id:'c6', label:'Remote Management is OFF'},
+    {id:'c7', label:'Guest WiFi is separate'}
+  ];
+  let count = 0;
+  lastUnchecked = [];
+  checks.forEach(c => {
+    if(document.getElementById(c.id).checked) count++;
+    else lastUnchecked.push(c.label);
+  });
+  lastScore = Math.round((count / checks.length) * 100);
+  document.getElementById('score').innerText = lastScore + ' / 100';
+  if(lastScore >= 85){
+    lastVerdict = '✅ SAFE - Great job! Protected from common attacks.';
+  } else if(lastScore >= 50){
+    lastVerdict = '⚠️ MEDIUM RISK - Fix the unchecked items above.';
+  } else {
+    lastVerdict = '🚨 HIGH RISK - Your WiFi can be attacked easily. Fix now.';
+  }
+  document.getElementById('result').innerText = lastVerdict;
+  document.getElementById('scoreDetail').innerHTML = '<small>You checked ' + count + ' out of 7 controls.</small>';
+}
+
+/* calculateEntropy() - NIST method
+   entropy = length * log2(poolSize)
+   pool: lower=26, upper=26, digits=10, symbols=33 */
+function calculateEntropy(p){
+  let pool = 0;
+  if(/[a-z]/.test(p)) pool += 26;
+  if(/[A-Z]/.test(p)) pool += 26;
+  if(/[0-9]/.test(p)) pool += 10;
+  if(/[^a-zA-Z0-9]/.test(p)) pool += 33;
+  if(pool === 0) return {entropy:0, pool:0};
+  const entropy = Math.round(p.length * Math.log2(pool));
+  return {entropy, pool};
+}
+
+function testPass(){
+  const p = document.getElementById('pass').value;
+  if(!p){
+    document.getElementById('passResult').innerText = '⚠️ Type a password first.';
+    return;
+  }
+  const {entropy} = calculateEntropy(p);
+  let msg, pill;
+  if(entropy < 40){ msg = '🚨 WEAK - Can be cracked in minutes to hours'; pill = 'pill-red'; }
+  else if(entropy < 60){ msg = '⚠️ MEDIUM - Add length + symbols'; pill = 'pill-yellow'; }
+  else if(entropy < 80){ msg = '✅ GOOD - Strong, will take years to crack'; pill = 'pill-green'; }
+  else { msg = '🛡️ EXCELLENT - Very hard to crack (80+ bits)'; pill = 'pill-green'; }
+  document.getElementById('passResult').innerHTML = 'Length: <b>' + p.length + '</b> - ' + msg + ' <span class="pill ' + pill + '">' + entropy + ' bits</span>';
+  document.getElementById('passEntropy').innerHTML = '<small>Entropy: ' + entropy + ' bits | Crack time (offline, 10B guesses/sec): ' + estimateCrackTime(entropy) + '<br>Tip: 16+ chars with mixed types = 80+ bits.</small>';
+}
+
+/* estimateCrackTime() - guesses = 2^(entropy-1), time = guesses / 1e10 */
+function estimateCrackTime(bits){
+  if(bits <= 0) return 'Instant';
+  const seconds = Math.pow(2, bits - 1) / 1e10;
+  if(seconds < 60) return 'Less than 1 minute';
+  if(seconds < 3600) return Math.round(seconds/60) + ' minutes';
+  if(seconds < 86400) return Math.round(seconds/3600) + ' hours';
+  if(seconds < 31536000) return Math.round(seconds/86400) + ' days';
+  if(seconds < 3153600000) return Math.round(seconds/31536000) + ' years';
+  return 'Centuries+';
+}
+
+function togglePass(){
+  const el = document.getElementById('pass');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+/* generatePassword() - Uses crypto.getRandomValues() CSPRNG
+   NEVER Math.random(). Removes confusing 0,O,l,1 */
+function generatePassword(){
+  const len = parseInt(document.getElementById('genLength').value);
+  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+";
+  const cryptoObj = window.crypto || window.msCrypto;
+  const randomValues = new Uint32Array(len);
+  cryptoObj.getRandomValues(randomValues);
+  let password = "";
+  for(let i=0; i<len; i++){
+    const max = Math.floor(4294967296 / charset.length) * charset.length;
+    if(randomValues[i] >= max){ i--; cryptoObj.getRandomValues(randomValues.subarray(i, i+1)); continue; }
+    password += charset[randomValues[i] % charset.length];
+  }
+  document.getElementById('generatedPass').innerText = password;
+  document.getElementById('copyMsg').innerHTML = '<small>✅ Generated. Tap COPY, then paste into router WiFi settings.</small>';
+}
+
+async function copyPassword(){
+  const text = document.getElementById('generatedPass').innerText;
+  if(!text || text.includes('Tap GENERATE')){
+    document.getElementById('copyMsg').innerHTML = '<small>⚠️ Generate a password first.</small>';
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    document.getElementById('copyMsg').innerHTML = '<small>✅ Copied to clipboard!</small>';
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    document.getElementById('copyMsg').innerHTML = '<small>✅ Copied!</small>';
+  }
+}
+
+/* buildReport() - Builds professional client report */
+function buildReport(){
+  const client = document.getElementById('client').value.trim();
+  const router = document.getElementById('router').value.trim() || 'Not specified';
+  const location = document.getElementById('location').value.trim() || 'Not specified';
+  const notes = document.getElementById('notes').value.trim() || 'No additional notes.';
+  if(!client){
+    alert('Please enter Client Name / Shop Name first.');
+    document.getElementById('client').focus();
+    return;
+  }
+  if(lastScore === null) calcScore();
+  const today = new Date().toLocaleDateString('en-NG', {day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('rClient').innerText = client;
+  document.getElementById('rRouter').innerText = router;
+  document.getElementById('rLocation').innerText = location;
+  document.getElementById('rDate').innerText = today;
+  document.getElementById('rScore').innerText = lastScore;
+  document.getElementById('rVerdict').innerText = lastVerdict;
+  document.getElementById('rNotes').innerText = notes;
+  const checks = [
+    {id:'c1', label:'WPA3 or WPA2/WPA3 is ON'},
+    {id:'c2', label:'WPS is OFF / Disabled'},
+    {id:'c3', label:'Default admin password changed'},
+    {id:'c4', label:'WiFi password is 16+ characters'},
+    {id:'c5', label:'Firmware is updated'},
+    {id:'c6', label:'Remote Management is OFF'},
+    {id:'c7', label:'Guest WiFi is separate'}
+  ];
+  let checklistHTML = '<ul>';
+  checks.forEach(c => {
+    const ok = document.getElementById(c.id).checked;
+    checklistHTML += '<li>' + (ok ? '✅ PASS' : '❌ FAIL') + ' - ' + c.label + '</li>';
+  });
+  checklistHTML += '</ul>';
+  document.getElementById('rChecklist').innerHTML = checklistHTML;
+  if(lastUnchecked.length === 0){
+    document.getElementById('rActions').innerHTML = '<p>✅ No action required. All controls are in place.</p>';
+  } else {
+    let a = '<ul>';
+    lastUnchecked.forEach(item => { a += '<li>Fix: ' + item + '</li>'; });
+    a += '</ul>';
+    document.getElementById('rActions').innerHTML = a;
+  }
+  const includePass = document.getElementById('includePass').checked;
+  const genPass = document.getElementById('generatedPass').innerText;
+  if(includePass && genPass && !genPass.includes('Tap GENERATE')){
+    document.getElementById('rPassBlock').style.display = 'block';
+    document.getElementById('rPass').innerText = genPass;
+  } else {
+    document.getElementById('rPassBlock').style.display = 'none';
+  }
+  document.getElementById('printArea').classList.remove('hidden');
+  document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+  document.getElementById('printArea').scrollIntoView({behavior:'smooth'});
+}
+
+function backToApp(){
+  document.getElementById('printArea').classList.add('hidden');
+  document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
 }
 </script>
 </body>
