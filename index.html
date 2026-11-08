@@ -123,6 +123,48 @@
   <button onclick="buildReport()">BUILD PROFESSIONAL REPORT</button>
   <small>Report will include Score + Checklist + Fixes. Give to client as proof of work.</small>
 </div>
+<!-- SECTION 6: DEVICE TRACKER
+     Purpose: List KNOWN devices vs UNKNOWN intruders.
+     Manual entry: User copies from router admin (192.168.1.1)
+     or MTN / Airtel app device list.
+     Logic: Known = trusted. Unknown = possible WiFi thief. -->
+<div class="card no-print">
+  <h2>6. Device Tracker - Who Is On Your WiFi?</h2>
+  <p><small>Check your router app or 192.168.1.1 > Connected Devices. Add them here.</small></p>
+
+  <input id="devName" placeholder="Device Name e.g Mum's Phone, Living Room TV">
+  <select id="devType">
+    <option value="Phone">📱 Phone</option>
+    <option value="Laptop">💻 Laptop</option>
+    <option value="TV">📺 TV / Decoder</option>
+    <option value="CCTV">📹 CCTV / Camera</option>
+    <option value="Router">📶 Router / Extender</option>
+    <option value="Other">🔌 Other / IoT</option>
+  </select>
+  <input id="devMac" placeholder="MAC Address (optional) e.g AA:BB:CC:11:22:33">
+
+  <label style="margin-top:10px">Is this device YOURS?
+    <select id="devStatus" style="margin-top:8px">
+      <option value="known">✅ YES - Known / Trusted</option>
+      <option value="unknown">🚨 NO - Unknown / Suspicious</option>
+    </select>
+  </label>
+
+  <button onclick="addDevice()">+ ADD DEVICE</button>
+
+  <div style="margin-top:14px;text-align:center">
+    <span class="pill pill-green" id="countKnown">Known: 0</span>
+    <span class="pill pill-red" id="countUnknown">Unknown: 0</span>
+    <span class="pill pill-yellow" id="countTotal">Total: 0</span>
+  </div>
+
+  <p id="trackerAlert" style="text-align:center;margin-top:10px"></p>
+
+  <div id="deviceList" style="margin-top:10px"></div>
+
+  <button class="secondary" onclick="clearDevices()">CLEAR ALL DEVICES</button>
+  <small>Tip: If Unknown > 0, change WiFi password immediately with Generator above.</small>
+</div>
 
 <!-- PRINT AREA - Hidden on screen, visible only when printing -->
 <div id="printArea" class="hidden">
@@ -338,6 +380,139 @@ function backToApp(){
   document.getElementById('printArea').classList.add('hidden');
   document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
 }
+/* ============================================================
+   SECTION 6: DEVICE TRACKER LOGIC
+   Author: Topshugar | GhostShot Defender
+   How it works:
+   - devices[] array stores all devices in memory
+   - addDevice() validates name, pushes to array, re-renders
+   - renderDevices() updates counts + list + alert
+   - Unknown > 0 = HIGH RISK, show red alert
+   - Report integration: buildReport() is wrapped below
+     to auto-add device summary to the printed report.
+   ============================================================ */
+let devices = [];
+
+/* addDevice() - Add one device to tracker */
+function addDevice(){
+  const name = document.getElementById('devName').value.trim();
+  const type = document.getElementById('devType').value;
+  const mac = document.getElementById('devMac').value.trim() || 'No MAC';
+  const status = document.getElementById('devStatus').value;
+
+  if(!name){
+    alert('Please enter Device Name first. e.g Mum\'s Phone');
+    document.getElementById('devName').focus();
+    return;
+  }
+
+  devices.push({name, type, mac, status});
+  // Clear inputs for next device
+  document.getElementById('devName').value = '';
+  document.getElementById('devMac').value = '';
+  document.getElementById('devStatus').value = 'known';
+  renderDevices();
+}
+
+/* renderDevices() - Update counts, list, alert */
+function renderDevices(){
+  let known = 0, unknown = 0;
+  devices.forEach(d => {
+    if(d.status === 'known') known++;
+    else unknown++;
+  });
+
+  document.getElementById('countKnown').innerText = 'Known: ' + known;
+  document.getElementById('countUnknown').innerText = 'Unknown: ' + unknown;
+  document.getElementById('countTotal').innerText = 'Total: ' + devices.length;
+
+  // Alert logic
+  const alertEl = document.getElementById('trackerAlert');
+  if(unknown > 0){
+    alertEl.innerHTML = '🚨 <b>' + unknown + ' UNKNOWN DEVICE(S)!</b><br><small>Possible WiFi thief. Change password NOW with Generator.</small>';
+    alertEl.style.color = '#ff4444';
+  } else if(devices.length > 0){
+    alertEl.innerHTML = '✅ All devices are known. No intruder found.';
+    alertEl.style.color = '#00ff9d';
+  } else {
+    alertEl.innerHTML = '';
+  }
+
+  // Build list HTML
+  const listEl = document.getElementById('deviceList');
+  if(devices.length === 0){
+    listEl.innerHTML = '<p style="text-align:center"><small>No devices added yet.</small></p>';
+    return;
+  }
+  let html = '';
+  devices.forEach((d, index) => {
+    const isKnown = d.status === 'known';
+    const badge = isKnown ? '<span class="pill pill-green">KNOWN</span>' : '<span class="pill pill-red">UNKNOWN</span>';
+    const icon = d.type === 'Phone' ? '📱' : d.type === 'Laptop' ? '💻' : d.type === 'TV' ? '📺' : d.type === 'CCTV' ? '📹' : d.type === 'Router' ? '📶' : '🔌';
+    html += '<div style="background:#0a0f1e;border:1px solid #2a3a6a;border-radius:10px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
+      + '<div><b>' + icon + ' ' + d.name + '</b><br><small>' + d.type + ' | MAC: ' + d.mac + ' | ' + badge + '</small></div>'
+      + '<button onclick="removeDevice(' + index + ')" style="width:auto;padding:6px 10px;background:#ff4444;color:#fff;margin:0">X</button>'
+      + '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+/* removeDevice() - Delete one device by index */
+function removeDevice(index){
+  devices.splice(index, 1);
+  renderDevices();
+}
+
+/* clearDevices() - Delete all devices after confirm */
+function clearDevices(){
+  if(devices.length === 0) return;
+  if(!confirm('Clear all ' + devices.length + ' devices?')) return;
+  devices = [];
+  renderDevices();
+}
+
+/* ============================================================
+   REPORT INTEGRATION - Wrap original buildReport()
+   We keep the original function, then add device summary
+   to the report automatically. No need to edit old code.
+   ============================================================ */
+const _originalBuildReport = buildReport;
+buildReport = function(){
+  // Run original report builder first
+  _originalBuildReport();
+
+  // Build device summary for print area
+  let deviceHTML = '';
+  if(devices.length === 0){
+    deviceHTML = '<p>No devices were tracked during this audit.</p>';
+  } else {
+    let known = devices.filter(d => d.status === 'known').length;
+    let unknown = devices.filter(d => d.status === 'unknown').length;
+    deviceHTML = '<p><b>Total:</b> ' + devices.length + ' | <b>Known:</b> ' + known + ' | <b>Unknown:</b> ' + unknown + '</p><ul>';
+    devices.forEach(d => {
+      deviceHTML += '<li>' + (d.status === 'known' ? '✅ KNOWN' : '🚨 UNKNOWN') + ' - ' + d.name + ' (' + d.type + ') - MAC: ' + d.mac + '</li>';
+    });
+    deviceHTML += '</ul>';
+    if(unknown > 0){
+      deviceHTML += '<p><b>⚠️ ACTION:</b> ' + unknown + ' unknown device(s) found. Recommend immediate WiFi password change and router reboot.</p>';
+    }
+  }
+
+  // Inject or update device section in print area
+  let section = document.getElementById('rDeviceSection');
+  if(!section){
+    section = document.createElement('div');
+    section.id = 'rDeviceSection';
+    // Insert before Technician Notes heading
+    const notesHeading = document.querySelector('#printArea h3:last-of-type');
+    if(notesHeading) notesHeading.parentNode.insertBefore(section, notesHeading);
+    else document.getElementById('printArea').appendChild(section);
+  }
+  section.innerHTML = '<h3>Device Tracker Result:</h3>' + deviceHTML;
+};
+
+// Initial render - show empty state on load
+renderDevices();
 </script>
 </body>
 </html>
