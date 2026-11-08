@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostShot - Network Defender</title>
+<style>
+body{background:#0a0f1e;color:#fff;font-family:Arial;padding:16px}
+.card{background:#111a33;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2a3a6a}
+h1{color:#00ff9d;text-align:center}
+button{background:#00ff9d;color:#000;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:10px}
+code{background:#000;padding:6px 10px;border-radius:6px;display:block;margin-top:8px}
+label{display:block;margin:10px 0}
+.score{font-size:42px;text-align:center;color:#00ff9d}
+</style>
+</head>
+<body>
+<h1>🛡️ GHOSTSHOT</h1>
+<p style="text-align:center">Local Network Web Service Mapper<br>By Topshugar | For Authorized Testing Only</p>
+
+<div class="card">
+<h2>What GhostShot Does</h2>
+<p>Discovers active web services on YOUR local network, captures screenshots, and builds a report.</p>
+<p><b>Usage in Termux / Kali:</b></p>
+<code>python3 ghostshot.py 192.168.1.1-20</code>
+<p><b>Output:</b> ./shots/ + ./report.html</p>
+<p><b>Ports scanned:</b> 80, 443, 8080, 8000</p>
+</div>
+
+<div class="card">
+<h2>WiFi Defense Audit</h2>
+<label><input type="checkbox" id="c1"> WPA3 or WPA2/WPA3 is ON</label>
+<label><input type="checkbox" id="c2"> WPS is OFF</label>
+<label><input type="checkbox" id="c3"> Default admin password changed</label>
+<label><input type="checkbox" id="c4"> WiFi password is 16+ characters</label>
+<label><input type="checkbox" id="c5"> Firmware updated</label>
+<label><input type="checkbox" id="c6"> Remote Management OFF</label>
+<label><input type="checkbox" id="c7"> Guest WiFi separate</label>
+<button onclick="calc()">CALCULATE MY SCORE</button>
+<div class="score" id="score">-- / 100</div>
+<p id="result" style="text-align:center"></p>
+</div>
+
+<div class="card">
+<h2>How To Use This Repo</h2>
+<p><b>1. For Termux users:</b> Download ghostshot.py and run the command above on YOUR OWN WiFi only.</p>
+<p><b>2. For Clients:</b> Use the Audit above, then open report.html after a scan.</p>
+<p style="color:#ffcc00">⚠️ Only scan networks you own or have written permission to test. Scanning others without permission is illegal.</p>
+</div>
+
+<script>
+function calc(){
+  let ids=['c1','c2','c3','c4','c5','c6','c7'];
+  let count=0; ids.forEach(id=>{ if(document.getElementById(id).checked) count++; });
+  let score=Math.round((count/7)*100);
+  document.getElementById('score').innerText=score+' / 100';
+  document.getElementById('result').innerText = score>=85 ? '✅ SAFE - Well protected' : score>=50 ? '⚠️ MEDIUM RISK - Fix unchecked items' : '🚨 HIGH RISK - Fix now';
+}
+</script>
+</body>
+</html>
