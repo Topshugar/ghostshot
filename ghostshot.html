@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostShot Defender</title>
+<style>
+body{font-family:Arial;background:#0a0f1e;color:#fff;padding:16px}
+.card{background:#111a33;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2a3a6a}
+h1{color:#00ff9d;text-align:center} h2{color:#00ff9d}
+button{background:#00ff9d;color:#000;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:10px}
+input{width:100%;padding:12px;border-radius:8px;border:none;margin-top:8px}
+.score{font-size:48px;text-align:center;color:#00ff9d}
+label{display:block;margin:10px 0}
+small{color:#aaa}
+</style>
+</head>
+<body>
+<h1>🛡️ GHOSTSHOT DEFENDER</h1>
+<p style="text-align:center">WiFi Security Audit - For Your Own Network Only</p>
+
+<div class="card">
+<h2>1. WiFi Audit</h2>
+<label><input type="checkbox" id="c1"> WPA3 or WPA2/WPA3 is ON</label>
+<label><input type="checkbox" id="c2"> WPS is OFF / Disabled</label>
+<label><input type="checkbox" id="c3"> Default admin password changed</label>
+<label><input type="checkbox" id="c4"> WiFi password is 16+ characters</label>
+<label><input type="checkbox" id="c5"> Firmware is updated</label>
+<label><input type="checkbox" id="c6"> Remote Management is OFF</label>
+<label><input type="checkbox" id="c7"> Guest WiFi is separate from Main WiFi</label>
+<button onclick="calc()">CALCULATE MY SCORE</button>
+<div class="score" id="score">-- / 100</div>
+<p id="result" style="text-align:center"></p>
+</div>
+
+<div class="card">
+<h2>2. WiFi Password Tester</h2>
+<input type="password" id="pass" placeholder="Type your WiFi password">
+<button onclick="testPass()">TEST STRENGTH</button>
+<p id="passResult"></p>
+<small>Never share your real password. Test on your own device only.</small>
+</div>
+
+<div class="card">
+<h2>3. GhostShot Localhost Check</h2>
+<p>Run this in Termux to check your phone:</p>
+<code>python3 ghostshot.py</code>
+<p>Check these ports are CLOSED if you don't need them:</p>
+<p>• 22 SSH • 80 HTTP • 8080 • 8000 • 5555 ADB</p>
+<p>If 5555 is OPEN, turn off USB Debugging now!</p>
+</div>
+
+<div class="card">
+<h2>4. Client Report</h2>
+<input id="client" placeholder="Client Name / Shop Name">
+<input id="router" placeholder="Router Model e.g TP-Link, MTN">
+<button onclick="window.print()">DOWNLOAD / PRINT REPORT</button>
+<p><small>Report will include your score + checklist. Give this to your client.</small></p>
+</div>
+
+<script>
+function calc(){
+  let ids=['c1','c2','c3','c4','c5','c6','c7'];
+  let count=0; ids.forEach(id=>{ if(document.getElementById(id).checked) count++; });
+  let score=Math.round((count/7)*100);
+  document.getElementById('score').innerText=score+' / 100';
+  let msg = score>=85 ? '✅ SAFE - Great job! You are protected from Airgeddon attacks.' : score>=50 ? '⚠️ MEDIUM RISK - Fix the unchecked items above.' : '🚨 HIGH RISK - Your WiFi can be attacked easily. Fix now.';
+  document.getElementById('result').innerText=msg;
+}
+function testPass(){
+  let p=document.getElementById('pass').value;
+  let msg = p.length<8 ? '🚨 WEAK - Too short, can be cracked in minutes' : p.length<12 ? '⚠️ MEDIUM - Add more characters' : p.length<16 ? '✅ GOOD - Strong' : '🛡️ EXCELLENT - Very hard to crack';
+  document.getElementById('passResult').innerText = 'Length: '+p.length+' - '+msg;
+}
+</script>
+</body>
+</html>
