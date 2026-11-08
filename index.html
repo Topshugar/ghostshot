@@ -695,6 +695,108 @@ function clearHistory(){
 
 // Load history when app opens
 renderHistory();
+/* Section 9: Subscription */
+const SUB_KEY = 'ghostshot_sub';
+const USED_CODES_KEY = 'ghostshot_used_codes';
+const ADMIN_PIN = '8165';
+
+function getSub(){
+  try{
+    const raw = localStorage.getItem(SUB_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+
+function isSubscribed(){
+  const sub = getSub();
+  if(!sub) return false;
+  return Date.now() < sub.expiry;
+}
+
+function updateSubUI(){
+  const statusEl = document.getElementById('subStatus');
+  const lockedBox = document.getElementById('lockedBox');
+  const unlockedBox = document.getElementById('unlockedBox');
+  const expiryEl = document.getElementById('subExpiry');
+  if(!statusEl) return;
+  if(isSubscribed()){
+    const sub = getSub();
+    const dateStr = new Date(sub.expiry).toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'});
+    statusEl.innerHTML = '<span style="color:#00ff9d">Active</span>';
+    lockedBox.style.display = 'none';
+    unlockedBox.style.display = 'block';
+    expiryEl.textContent = 'Valid until: ' + dateStr;
+  } else {
+    statusEl.innerHTML = '<span style="color:#ffcc00">Not Active</span>';
+    lockedBox.style.display = 'block';
+    unlockedBox.style.display = 'none';
+  }
+}
+
+function isValidCodeFormat(code){
+  const clean = code.toUpperCase().trim();
+  if(!clean.startsWith('GHOST-')) return false;
+  const digits = clean.replace('GHOST-', '');
+  if(digits.length !== 4) return false;
+  if(!/^\d{4}$/.test(digits)) return false;
+  const d1 = parseInt(digits[0]);
+  const d2 = parseInt(digits[1]);
+  const d3 = parseInt(digits[2]);
+  const check = parseInt(digits[3]);
+  const expected = (d1 * 3 + d2 * 2 + d3) % 10;
+  return check === expected;
+}
+
+function getUsedCodes(){
+  try{
+    const raw = localStorage.getItem(USED_CODES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function activateCode(){
+  const input = document.getElementById('activationCode');
+  const code = input.value.toUpperCase().trim();
+  if(!code){
+    alert('Please enter your activation code.');
+    return;
+  }
+  if(!isValidCodeFormat(code)){
+    alert('Invalid code. Please check and try again.');
+    return;
+  }
+  const used = getUsedCodes();
+  if(used.includes(code)){
+    alert('This code has already been used on this device.');
+    return;
+  }
+  const expiry = Date.now() + (30 * 24 * 60 * 60 * 1000);
+  localStorage.setItem(SUB_KEY, JSON.stringify({code: code, expiry: expiry, activatedAt: Date.now()}));
+  used.push(code);
+  localStorage.setItem(USED_CODES_KEY, JSON.stringify(used));
+  input.value = '';
+  updateSubUI();
+  alert('Activated! Your subscription is valid for 30 days.');
+}
+
+function generateCode(){
+  const pinInput = document.getElementById('adminPin');
+  const outEl = document.getElementById('generatedCode');
+  if(pinInput.value !== ADMIN_PIN){
+    alert('Incorrect PIN.');
+    return;
+  }
+  const d1 = Math.floor(Math.random() * 10);
+  const d2 = Math.floor(Math.random() * 10);
+  const d3 = Math.floor(Math.random() * 10);
+  const check = (d1 * 3 + d2 * 2 + d3) % 10;
+  const code = 'GHOST-' + d1 + d2 + d3 + check;
+  outEl.textContent = code;
+  pinInput.value = '';
+}
+
+updateSubUI();
 </script>
 </body>
 </html>
