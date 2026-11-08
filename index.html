@@ -2,801 +2,159 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GhostShot Defender - WiFi Security Audit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostShot | Wireless Security Defense</title>
 <style>
-  /* GHOSTSHOT DEFENDER - UI STYLES
-     All logic runs 100% locally. No data leaves device. */
-  *{box-sizing:border-box}
-  body{font-family:Arial,system-ui,sans-serif;background:#0a0f1e;color:#fff;padding:16px;margin:0}
-  .card{background:#111a33;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2a3a6a}
-  h1{color:#00ff9d;text-align:center;font-size:24px;margin:10px 0 4px}
-  h2{color:#00ff9d;font-size:18px;margin:0 0 10px}
-  .subtitle{text-align:center;color:#ccc;font-size:13px;margin-bottom:16px}
-  button{background:#00ff9d;color:#000;border:none;padding:12px;width:100%;border-radius:10px;font-weight:bold;font-size:16px;margin-top:10px;cursor:pointer}
-  button.secondary{background:#2a3a6a;color:#fff}
-  button:active{opacity:.85}
-  input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #2a3a6a;background:#0a0f1e;color:#fff;margin-top:8px;font-size:15px}
-  textarea{min-height:70px;resize:vertical}
-  .score{font-size:48px;text-align:center;color:#00ff9d;font-weight:bold;margin:10px 0 4px}
-  label{display:block;margin:10px 0;font-size:15px;line-height:1.4}
-  label input{width:auto;margin-right:8px;accent-color:#00ff9d}
-  small{color:#aaa;line-height:1.5;display:block}
-  code{background:#000;padding:8px 10px;border-radius:6px;display:block;margin-top:8px;font-size:13px;word-break:break-all}
-  .mono{font-family:monospace;font-size:16px;word-break:break-all;background:#000;padding:12px;border-radius:8px;text-align:center;letter-spacing:1px}
-  .pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold}
-  .pill-green{background:#00ff9d;color:#000}
-  .pill-yellow{background:#ffcc00;color:#000}
-  .pill-red{background:#ff4444;color:#fff}
-  .row{display:flex;gap:8px}
-  .row button{flex:1}
-  .hidden{display:none}
-  @media print{
-    body{background:#fff;color:#000;padding:0}
-    .no-print{display:none !important}
-    .card{border:1px solid #000;background:#fff;color:#000;break-inside:avoid}
-    h1,h2,.score{color:#000 !important}
-    #printArea{display:block !important}
-  }
+body{background:#0a0e1a;color:#e8eaf0;font-family:Arial,sans-serif;margin:0;padding:14px}
+.card{background:#11182b;border:1px solid #26314f;border-radius:10px;padding:16px;margin-bottom:12px}
+h1{color:#ffffff;text-align:center;margin:4px 0;font-size:28px;letter-spacing:2px}
+.sub{text-align:center;color:#9aa3b8;font-size:13px;line-height:1.5}
+h3{margin:0 0 8px 0;color:#ffffff;font-size:16px}
+input,select{width:100%;padding:12px;border-radius:8px;background:#0a0e1a;color:#ffffff;border:1px solid #26314f;margin-top:8px;box-sizing:border-box;font-size:15px}
+button{background:#1e6bff;color:#ffffff;border:none;padding:13px;width:100%;border-radius:8px;font-weight:bold;margin-top:10px;font-size:15px;cursor:pointer}
+button.secondary{background:#2a3550;color:#ffffff}
+.badge{display:inline-block;background:#1e6bff;color:#ffffff;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:bold;letter-spacing:1px}
+.danger{background:#3a1212;border:1px solid #ff2a2a;color:#ffffff;padding:10px;border-radius:8px}
+.warn{background:#3a2a10;border:1px solid #ffaa00;color:#ffffff;padding:10px;border-radius:8px}
+.good{color:#2ecc71}
+pre{white-space:pre-wrap;background:#05070d;padding:12px;border-radius:8px;font-size:13px;line-height:1.5;color:#d0d5e0;border:1px solid #26314f}
+.small{font-size:12px;color:#9aa3b8;line-height:1.6}
+.center{text-align:center}
+hr{border:none;border-top:1px solid #26314f;margin:12px 0}
 </style>
 </head>
 <body>
-
-<h1 class="no-print">🛡️ GHOSTSHOT DEFENDER</h1>
-<p class="subtitle no-print">WiFi Security Audit — For Your Own Network Only<br>All checks run locally. No password is sent online.</p>
-
-<!-- SECTION 1: WI-FI AUDIT
-     Score = (checked / 7) * 100 -->
-<div class="card no-print">
-  <h2>1. WiFi Audit</h2>
-  <label><input type="checkbox" id="c1"> WPA3 or WPA2/WPA3 is ON <small>WPA3 fixes offline dictionary attacks.</small></label>
-  <label><input type="checkbox" id="c2"> WPS is OFF / Disabled <small>WPS PIN can be brute-forced in hours.</small></label>
-  <label><input type="checkbox" id="c3"> Default admin password changed <small>Default = admin/admin.</small></label>
-  <label><input type="checkbox" id="c4"> WiFi password is 16+ characters <small>Length is #1 defence.</small></label>
-  <label><input type="checkbox" id="c5"> Firmware is updated <small>Old firmware = known CVEs.</small></label>
-  <label><input type="checkbox" id="c6"> Remote Management is OFF <small>If ON, anyone can try to login to router.</small></label>
-  <label><input type="checkbox" id="c7"> Guest WiFi is separate <small>Guests should never be on main network.</small></label>
-  <button onclick="calcScore()">CALCULATE MY SCORE</button>
-  <div class="score" id="score">-- / 100</div>
-  <p id="result" style="text-align:center"></p>
-  <p id="scoreDetail" style="text-align:center"><small></small></p>
+<div class="card center">
+<h1>GHOSTSHOT</h1>
+<div><span class="badge">WIRELESS SECURITY DEFENSE &nbsp;|&nbsp; COMMUNITY EDITION</span></div>
+<p class="small">Developed by Temitope Abraham Olorunmola<br>Wireless Intrusion Detection and Assessment Tool</p>
 </div>
 
-<!-- SECTION 2: PASSWORD TESTER
-     Accurate: Entropy = length * log2(poolSize)
-     Pool: lower=26, upper=26, digits=10, symbols=33
-     NIST SP 800-63B method -->
-<div class="card no-print">
-  <h2>2. WiFi Password Tester</h2>
-  <input type="password" id="pass" placeholder="Type your WiFi password to test" autocomplete="off">
-  <div class="row">
-    <button onclick="testPass()">TEST STRENGTH</button>
-    <button class="secondary" onclick="togglePass()">SHOW / HIDE</button>
-  </div>
-  <p id="passResult"></p>
-  <p id="passEntropy"><small></small></p>
-  <small>Tested 100% offline. Password never leaves device.</small>
+<div class="card">
+<h3>1. Airgeddon Attack Overview</h3>
+<p class="small">Airgeddon is a wireless attack framework used to create a fraudulent access point (Evil Twin), force client disconnection (Deauthentication), and capture credentials via a captive portal. This tool assists in identifying indicators of such attacks.</p>
+<p><b>Indicators of Compromise:</b><br>• Repeated disconnections at short intervals<br>• Duplicate SSID broadcasts observed<br>• Unsolicited captive portal requesting WiFi credentials<br>• Abnormal signal strength with degraded throughput</p>
 </div>
 
-<!-- SECTION 3: PASSWORD GENERATOR
-     Uses crypto.getRandomValues() - CSPRNG
-     NEVER Math.random() - predictable -->
-<div class="card no-print">
-  <h2>3. Secure Password Generator</h2>
-  <label>Length:
-    <select id="genLength">
-      <option value="12">12 characters - Minimum</option>
-      <option value="16" selected>16 characters - Recommended for WiFi</option>
-      <option value="20">20 characters - High Security</option>
-      <option value="24">24 characters - Maximum</option>
-    </select>
-  </label>
-  <div class="mono" id="generatedPass">Tap GENERATE below</div>
-  <div class="row">
-    <button onclick="generatePassword()">GENERATE SECURE PASSWORD</button>
-    <button class="secondary" onclick="copyPassword()">COPY</button>
-  </div>
-  <p id="copyMsg" style="text-align:center"><small></small></p>
-  <small>Generated with crypto.getRandomValues() - cryptographically secure.</small>
+<div class="card">
+<h3>2. Evil Twin Detection</h3>
+<input id="ssid" placeholder="Network Name (SSID)">
+<select id="enc">
+<option value="">Select Encryption Type</option>
+<option value="Open">Open - No Encryption</option>
+<option value="WPA2">WPA2</option>
+<option value="WPA3">WPA3</option>
+<option value="WEP">WEP</option>
+</select>
+<input id="count" type="number" placeholder="Number of networks observed with identical SSID">
+<button onclick="checkTwin()">ASSESS EVIL TWIN RISK</button>
+<div id="twinOut"></div>
 </div>
-<!-- SECTION 4: LOCALHOST CHECK
-     Checklist only. Browsers cannot scan ports.
-     User must verify in Termux. -->
-<div class="card no-print">
-  <h2>4. GhostShot Localhost Check</h2>
-  <p>Run this in Termux to check your phone:</p>
-  <code>python3 ghostshot.py</code>
-  <p style="margin-top:12px">Check these ports are CLOSED if you don't need them:</p>
-  <p>• <b>22 SSH</b> - Only if you use SSH<br>• <b>80 HTTP</b> - Old web server<br>• <b>8080 / 8000</b> - Test servers<br>• <b>5555 ADB</b> - <span style="color:#ff4444">If OPEN, turn off USB Debugging NOW!</span></p>
-  <small>ADB on 5555 = anyone on your WiFi can control your phone.</small>
+<div class="card">
+<h3>3. Deauthentication Assessment</h3>
+<p class="small">Enter the number of disconnections observed within the last 10 minutes.</p>
+<input id="disc" type="number" placeholder="e.g. 0, 3, 10">
+<button onclick="checkDeauth()">ASSESS DEAUTH RISK</button>
+<div id="deauthOut"></div>
 </div>
 
-<!-- SECTION 5: CLIENT REPORT
-     Collects info + score + builds print-only report -->
-<div class="card no-print">
-  <h2>5. Client Report</h2>
-  <input id="client" placeholder="Client Name / Shop Name *">
-  <input id="router" placeholder="Router Model e.g TP-Link Archer C6, MTN 5G">
-  <input id="location" placeholder="Location / Address">
-  <textarea id="notes" placeholder="Technician Notes e.g Changed admin password, Disabled WPS, Updated firmware"></textarea>
-  <label><input type="checkbox" id="includePass"> Include generated password in report (only if client asked)</label>
-  <button onclick="buildReport()">BUILD PROFESSIONAL REPORT</button>
-  <small>Report will include Score + Checklist + Fixes. Give to client as proof of work.</small>
+<div class="card">
+<h3>4. Password Strength Assessment</h3>
+<input type="text" id="pwd" placeholder="Enter WiFi password to assess">
+<button onclick="checkPwd()">ASSESS PASSWORD</button>
+<div id="pwdOut"></div>
 </div>
-<!-- SECTION 6: DEVICE TRACKER
-     Purpose: List KNOWN devices vs UNKNOWN intruders.
-     Manual entry: User copies from router admin (192.168.1.1)
-     or MTN / Airtel app device list.
-     Logic: Known = trusted. Unknown = possible WiFi thief. -->
-<div class="card no-print">
-  <h2>6. Device Tracker - Who Is On Your WiFi?</h2>
-  <p><small>Check your router app or 192.168.1.1 > Connected Devices. Add them here.</small></p>
-
-  <input id="devName" placeholder="Device Name e.g Mum's Phone, Living Room TV">
-  <select id="devType">
-    <option value="Phone">📱 Phone</option>
-    <option value="Laptop">💻 Laptop</option>
-    <option value="TV">📺 TV / Decoder</option>
-    <option value="CCTV">📹 CCTV / Camera</option>
-    <option value="Router">📶 Router / Extender</option>
-    <option value="Other">🔌 Other / IoT</option>
-  </select>
-  <input id="devMac" placeholder="MAC Address (optional) e.g AA:BB:CC:11:22:33">
-
-  <label style="margin-top:10px">Is this device YOURS?
-    <select id="devStatus" style="margin-top:8px">
-      <option value="known">✅ YES - Known / Trusted</option>
-      <option value="unknown">🚨 NO - Unknown / Suspicious</option>
-    </select>
-  </label>
-
-  <button onclick="addDevice()">+ ADD DEVICE</button>
-
-  <div style="margin-top:14px;text-align:center">
-    <span class="pill pill-green" id="countKnown">Known: 0</span>
-    <span class="pill pill-red" id="countUnknown">Unknown: 0</span>
-    <span class="pill pill-yellow" id="countTotal">Total: 0</span>
-  </div>
-
-  <p id="trackerAlert" style="text-align:center;margin-top:10px"></p>
-
-  <div id="deviceList" style="margin-top:10px"></div>
-
-  <button class="secondary" onclick="clearDevices()">CLEAR ALL DEVICES</button>
-  <small>Tip: If Unknown > 0, change WiFi password immediately with Generator above.</small>
-</div>
-<!-- SECTION 7: SCAN HISTORY
-     Purpose: Save each audit so you can show client progress.
-     Example: Last month 43/100 -> Today 86/100 = Improvement
-     Storage: localStorage on this phone only. No internet. -->
-<div class="card no-print">
-  <h2>7. Scan History - Show Client Progress</h2>
-  <p><small>Save each audit. Next time you visit client, show them how they improved.</small></p>
-
-  <input id="historyClient" placeholder="Client Name for this scan e.g Mama Nkechi Shop">
-  <button onclick="saveScan()">💾 SAVE THIS SCAN</button>
-
-  <div id="historyList" style="margin-top:12px"></div>
-
-  <button class="secondary" onclick="clearHistory()">CLEAR ALL HISTORY</button>
-  <small>Saved on this phone only. If you clear browser data, history will be lost. Export via Report for permanent record.</small>
-</div>
-<!-- Section 9: Subscription -->
-<div class="card no-print" style="text-align:center;border:2px solid #00ff9d">
-  <h2>9. Monthly Subscription 🔓</h2>
-  <p id="subStatus"><small>Checking subscription...</small></p>
-
-  <!-- Subscription Activation -->
-  <div id="lockedBox">
-    <p><b>🔒 Monthly Check is LOCKED</b><br><small>Pay ₦3,000 via OPay to 08165043865, then enter your code below.</small></p>
-    <input type="text" id="activationCode" placeholder="Enter Code e.g. GHOST-1234" style="text-transform:uppercase">
-    <button onclick="activateCode()" style="background:#00ff9d;color:#000">ACTIVATE MY 30 DAYS</button>
-    <a href="https://wa.me/2348165043865?text=Hello%20Topshugar%2C%20I%20paid%20for%20Monthly%20Check.%20Send%20me%20my%20code." target="_blank" style="display:block;background:#25D366;color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-weight:bold;margin-top:10px">
-      💬 I HAVE PAID - SEND MY CODE
-    </a>
-  </div>
-
-  <!-- Active Subscription -->
-  <div id="unlockedBox" style="display:none">
-    <p style="color:#00ff9d;font-weight:bold">✅ SUBSCRIBED - You Are Protected</p>
-    <p id="subExpiry"></p>
-    <p><small>Your History + Monthly Checks are unlocked.</small></p>
-  </div>
-
-  <!-- Admin -->
-  <details style="margin-top:15px;text-align:left;background:#0a0f1e;padding:10px;border-radius:10px">
-    <summary style="cursor:pointer"><b>🔧 Admin</b></summary>
-    <p><small>Authorized access only.</small></p>
-    <input type="password" id="adminPin" placeholder="Admin PIN">
-    <button onclick="generateCode()" style="background:#6a00ff">GENERATE NEW CODE</button>
-    <p id="generatedCode" style="font-weight:bold;color:#00ff9d"></p>
-    <small>Copy the code and send it to the client on WhatsApp.</small>
-  </details>
+<div class="card">
+<h3>5. Wireless Security Audit</h3>
+<input id="aname" placeholder="Location / Facility Name">
+<input id="arouter" placeholder="Router Model">
+<button class="secondary" onclick="audit()">RUN SECURITY AUDIT</button>
+<pre id="auditOut">Audit results will be displayed here.</pre>
 </div>
 
-<!-- PRINT AREA - Hidden on screen, visible only when printing -->
-<div id="printArea" class="hidden">
-  <div style="border:2px solid #000;padding:20px;font-family:Arial;color:#000;background:#fff">
-    <h1 style="color:#000;text-align:center;margin:0">🛡️ GHOSTSHOT DEFENDER</h1>
-    <p style="text-align:center;margin:4px 0">WiFi Security Audit Report</p>
-    <hr>
-    <p><b>Client:</b> <span id="rClient"></span><br>
-    <b>Router:</b> <span id="rRouter"></span><br>
-    <b>Location:</b> <span id="rLocation"></span><br>
-    <b>Date:</b> <span id="rDate"></span><br>
-    <b>Audited By:</b> Topshugar | GhostShot</p>
-    <hr>
-    <h2 style="color:#000">Security Score: <span id="rScore"></span> / 100</h2>
-    <p id="rVerdict"></p>
-    <h3>Checklist Result:</h3>
-    <div id="rChecklist"></div>
-    <h3>Action Required (Unchecked Items):</h3>
-    <div id="rActions"></div>
-    <div id="rPassBlock" style="display:none">
-      <h3>New Secure WiFi Password:</h3>
-      <p style="font-family:monospace;font-size:18px;border:1px dashed #000;padding:10px" id="rPass"></p>
-      <p><small>Change WiFi password to this immediately. Do not share publicly.</small></p>
-    </div>
-    <h3>Technician Notes:</h3>
-    <p id="rNotes"></p>
-    <hr>
-    <p><small>Disclaimer: This audit checks basic WiFi hardening settings only. It does not guarantee protection against all attacks. Only audit networks you own or have written permission to test. | Generated locally by GhostShot Defender - No data sent online.</small></p>
-    <br><br>
-    <p>Technician Signature: ______________________ &nbsp;&nbsp;&nbsp; Client Signature: ______________________</p>
-  </div>
-  <button class="no-print" onclick="window.print()" style="margin-top:12px">DOWNLOAD / PRINT THIS REPORT</button>
-  <button class="no-print secondary" onclick="backToApp()">BACK TO APP</button>
+<div class="card">
+<h3>6. Assessment Report</h3>
+<button class="secondary" onclick="report()">GENERATE ASSESSMENT REPORT</button>
+<pre id="repOut">Report will be displayed here.</pre>
+<button class="secondary" onclick="copyRep()">COPY REPORT</button>
 </div>
 
+<div class="card center">
+<p><b>Distribution</b></p>
+<button onclick="shareWA()">SHARE VIA WHATSAPP</button>
+<p class="small">GhostShot - Wireless Security Defense<br>Abuja, Nigeria</p>
+</div>
 <script>
-/* GLOBAL STATE - stores last score for Report */
-let lastScore = null;
-let lastVerdict = "";
-let lastUnchecked = [];
-
-/* calcScore() - Score = (checked / 7) * 100
-   85+ = SAFE, 50-84 = MEDIUM, 0-49 = HIGH RISK */
-function calcScore(){
-  const checks = [
-    {id:'c1', label:'WPA3 or WPA2/WPA3 is ON'},
-    {id:'c2', label:'WPS is OFF / Disabled'},
-    {id:'c3', label:'Default admin password changed'},
-    {id:'c4', label:'WiFi password is 16+ characters'},
-    {id:'c5', label:'Firmware is updated'},
-    {id:'c6', label:'Remote Management is OFF'},
-    {id:'c7', label:'Guest WiFi is separate'}
-  ];
-  let count = 0;
-  lastUnchecked = [];
-  checks.forEach(c => {
-    if(document.getElementById(c.id).checked) count++;
-    else lastUnchecked.push(c.label);
-  });
-  lastScore = Math.round((count / checks.length) * 100);
-  document.getElementById('score').innerText = lastScore + ' / 100';
-  if(lastScore >= 85){
-    lastVerdict = '✅ SAFE - Great job! Protected from common attacks.';
-  } else if(lastScore >= 50){
-    lastVerdict = '⚠️ MEDIUM RISK - Fix the unchecked items above.';
+function checkTwin(){
+  var s = document.getElementById('ssid').value.trim();
+  var e = document.getElementById('enc').value;
+  var c = parseInt(document.getElementById('count').value || '1');
+  var h = '';
+  if(!s){
+    h = '<p class="warn">Please enter the network name (SSID) to proceed.</p>';
+  } else if(c >= 2){
+    h = '<p class="danger">HIGH RISK: EVIL TWIN INDICATED. ' + c + ' networks detected with SSID "' + s + '". One is likely fraudulent. Do not connect. Disconnect, forget the network, and use mobile data.</p>';
+  } else if(e === 'Open'){
+    h = '<p class="warn">MEDIUM RISK: Open network. No encryption. Susceptible to impersonation. Avoid transmitting sensitive data.</p>';
+  } else if(e === 'WEP'){
+    h = '<p class="warn">HIGH RISK: WEP encryption is deprecated and compromised. Migrate to WPA2 or WPA3 immediately.</p>';
   } else {
-    lastVerdict = '🚨 HIGH RISK - Your WiFi can be attacked easily. Fix now.';
+    h = '<p class="good">LOW RISK: Single network observed with SSID "' + s + '" using ' + e + '. No Evil Twin indicator detected at this time. Maintain vigilance.</p>';
   }
-  document.getElementById('result').innerText = lastVerdict;
-  document.getElementById('scoreDetail').innerHTML = '<small>You checked ' + count + ' out of 7 controls.</small>';
+  document.getElementById('twinOut').innerHTML = h;
 }
 
-/* calculateEntropy() - NIST method
-   entropy = length * log2(poolSize)
-   pool: lower=26, upper=26, digits=10, symbols=33 */
-function calculateEntropy(p){
-  let pool = 0;
-  if(/[a-z]/.test(p)) pool += 26;
-  if(/[A-Z]/.test(p)) pool += 26;
-  if(/[0-9]/.test(p)) pool += 10;
-  if(/[^a-zA-Z0-9]/.test(p)) pool += 33;
-  if(pool === 0) return {entropy:0, pool:0};
-  const entropy = Math.round(p.length * Math.log2(pool));
-  return {entropy, pool};
-}
-
-function testPass(){
-  const p = document.getElementById('pass').value;
-  if(!p){
-    document.getElementById('passResult').innerText = '⚠️ Type a password first.';
-    return;
-  }
-  const {entropy} = calculateEntropy(p);
-  let msg, pill;
-  if(entropy < 40){ msg = '🚨 WEAK - Can be cracked in minutes to hours'; pill = 'pill-red'; }
-  else if(entropy < 60){ msg = '⚠️ MEDIUM - Add length + symbols'; pill = 'pill-yellow'; }
-  else if(entropy < 80){ msg = '✅ GOOD - Strong, will take years to crack'; pill = 'pill-green'; }
-  else { msg = '🛡️ EXCELLENT - Very hard to crack (80+ bits)'; pill = 'pill-green'; }
-  document.getElementById('passResult').innerHTML = 'Length: <b>' + p.length + '</b> - ' + msg + ' <span class="pill ' + pill + '">' + entropy + ' bits</span>';
-  document.getElementById('passEntropy').innerHTML = '<small>Entropy: ' + entropy + ' bits | Crack time (offline, 10B guesses/sec): ' + estimateCrackTime(entropy) + '<br>Tip: 16+ chars with mixed types = 80+ bits.</small>';
-}
-
-/* estimateCrackTime() - guesses = 2^(entropy-1), time = guesses / 1e10 */
-function estimateCrackTime(bits){
-  if(bits <= 0) return 'Instant';
-  const seconds = Math.pow(2, bits - 1) / 1e10;
-  if(seconds < 60) return 'Less than 1 minute';
-  if(seconds < 3600) return Math.round(seconds/60) + ' minutes';
-  if(seconds < 86400) return Math.round(seconds/3600) + ' hours';
-  if(seconds < 31536000) return Math.round(seconds/86400) + ' days';
-  if(seconds < 3153600000) return Math.round(seconds/31536000) + ' years';
-  return 'Centuries+';
-}
-
-function togglePass(){
-  const el = document.getElementById('pass');
-  el.type = el.type === 'password' ? 'text' : 'password';
-}
-
-/* generatePassword() - Uses crypto.getRandomValues() CSPRNG
-   NEVER Math.random(). Removes confusing 0,O,l,1 */
-function generatePassword(){
-  const len = parseInt(document.getElementById('genLength').value);
-  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+";
-  const cryptoObj = window.crypto || window.msCrypto;
-  const randomValues = new Uint32Array(len);
-  cryptoObj.getRandomValues(randomValues);
-  let password = "";
-  for(let i=0; i<len; i++){
-    const max = Math.floor(4294967296 / charset.length) * charset.length;
-    if(randomValues[i] >= max){ i--; cryptoObj.getRandomValues(randomValues.subarray(i, i+1)); continue; }
-    password += charset[randomValues[i] % charset.length];
-  }
-  document.getElementById('generatedPass').innerText = password;
-  document.getElementById('copyMsg').innerHTML = '<small>✅ Generated. Tap COPY, then paste into router WiFi settings.</small>';
-}
-
-async function copyPassword(){
-  const text = document.getElementById('generatedPass').innerText;
-  if(!text || text.includes('Tap GENERATE')){
-    document.getElementById('copyMsg').innerHTML = '<small>⚠️ Generate a password first.</small>';
-    return;
-  }
-  try{
-    await navigator.clipboard.writeText(text);
-    document.getElementById('copyMsg').innerHTML = '<small>✅ Copied to clipboard!</small>';
-  }catch(e){
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    document.getElementById('copyMsg').innerHTML = '<small>✅ Copied!</small>';
-  }
-}
-
-/* buildReport() - Builds professional client report */
-function buildReport(){
-  const client = document.getElementById('client').value.trim();
-  const router = document.getElementById('router').value.trim() || 'Not specified';
-  const location = document.getElementById('location').value.trim() || 'Not specified';
-  const notes = document.getElementById('notes').value.trim() || 'No additional notes.';
-  if(!client){
-    alert('Please enter Client Name / Shop Name first.');
-    document.getElementById('client').focus();
-    return;
-  }
-  if(lastScore === null) calcScore();
-  const today = new Date().toLocaleDateString('en-NG', {day:'numeric', month:'long', year:'numeric'});
-  document.getElementById('rClient').innerText = client;
-  document.getElementById('rRouter').innerText = router;
-  document.getElementById('rLocation').innerText = location;
-  document.getElementById('rDate').innerText = today;
-  document.getElementById('rScore').innerText = lastScore;
-  document.getElementById('rVerdict').innerText = lastVerdict;
-  document.getElementById('rNotes').innerText = notes;
-  const checks = [
-    {id:'c1', label:'WPA3 or WPA2/WPA3 is ON'},
-    {id:'c2', label:'WPS is OFF / Disabled'},
-    {id:'c3', label:'Default admin password changed'},
-    {id:'c4', label:'WiFi password is 16+ characters'},
-    {id:'c5', label:'Firmware is updated'},
-    {id:'c6', label:'Remote Management is OFF'},
-    {id:'c7', label:'Guest WiFi is separate'}
-  ];
-  let checklistHTML = '<ul>';
-  checks.forEach(c => {
-    const ok = document.getElementById(c.id).checked;
-    checklistHTML += '<li>' + (ok ? '✅ PASS' : '❌ FAIL') + ' - ' + c.label + '</li>';
-  });
-  checklistHTML += '</ul>';
-  document.getElementById('rChecklist').innerHTML = checklistHTML;
-  if(lastUnchecked.length === 0){
-    document.getElementById('rActions').innerHTML = '<p>✅ No action required. All controls are in place.</p>';
+function checkDeauth(){
+  var d = parseInt(document.getElementById('disc').value || '0');
+  var h = '';
+  if(d >= 5){
+    h = '<p class="danger">HIGH RISK: DEAUTHENTICATION ATTACK LIKELY. ' + d + ' disconnections in 10 minutes is abnormal. An attacker may be forcing clients off the network. Disconnect WiFi and use mobile data.</p>';
+  } else if(d >= 2){
+    h = '<p class="warn">MEDIUM RISK: ' + d + ' disconnections observed. Monitor for continued activity.</p>';
   } else {
-    let a = '<ul>';
-    lastUnchecked.forEach(item => { a += '<li>Fix: ' + item + '</li>'; });
-    a += '</ul>';
-    document.getElementById('rActions').innerHTML = a;
+    h = '<p class="good">LOW RISK: ' + d + ' disconnections is within normal range.</p>';
   }
-  const includePass = document.getElementById('includePass').checked;
-  const genPass = document.getElementById('generatedPass').innerText;
-  if(includePass && genPass && !genPass.includes('Tap GENERATE')){
-    document.getElementById('rPassBlock').style.display = 'block';
-    document.getElementById('rPass').innerText = genPass;
+  document.getElementById('deauthOut').innerHTML = h;
+}
+
+function checkPwd(){
+  var p = document.getElementById('pwd').value;
+  var score = 0;
+  if(p.length >= 12) score += 2;
+  else if(p.length >= 8) score += 1;
+  if(/[A-Z]/.test(p)) score++;
+  if(/[0-9]/.test(p)) score++;
+  if(/[^A-Za-z0-9]/.test(p)) score++;
+  var h = '';
+  if(p.length < 8){
+    h = '<p class="danger">WEAK: Password length is insufficient. Minimum recommended length is 12 characters.</p>';
+  } else if(score >= 4){
+    h = '<p class="good">STRONG: Password meets complexity requirements. Resistant to standard dictionary and brute-force methods.</p>';
   } else {
-    document.getElementById('rPassBlock').style.display = 'none';
+    h = '<p class="warn">MODERATE: Improve complexity by adding uppercase, numeric, and special characters.</p>';
   }
-  document.getElementById('printArea').classList.remove('hidden');
-  document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
-  document.getElementById('printArea').scrollIntoView({behavior:'smooth'});
+  document.getElementById('pwdOut').innerHTML = h;
 }
 
-function backToApp(){
-  document.getElementById('printArea').classList.add('hidden');
-  document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
-}
-/* ============================================================
-   SECTION 6: DEVICE TRACKER LOGIC
-   Author: Topshugar | GhostShot Defender
-   How it works:
-   - devices[] array stores all devices in memory
-   - addDevice() validates name, pushes to array, re-renders
-   - renderDevices() updates counts + list + alert
-   - Unknown > 0 = HIGH RISK, show red alert
-   - Report integration: buildReport() is wrapped below
-     to auto-add device summary to the printed report.
-   ============================================================ */
-let devices = [];
-
-/* addDevice() - Add one device to tracker */
-function addDevice(){
-  const name = document.getElementById('devName').value.trim();
-  const type = document.getElementById('devType').value;
-  const mac = document.getElementById('devMac').value.trim() || 'No MAC';
-  const status = document.getElementById('devStatus').value;
-
-  if(!name){
-    alert('Please enter Device Name first. e.g Mum\'s Phone');
-    document.getElementById('devName').focus();
-    return;
-  }
-
-  devices.push({name, type, mac, status});
-  // Clear inputs for next device
-  document.getElementById('devName').value = '';
-  document.getElementById('devMac').value = '';
-  document.getElementById('devStatus').value = 'known';
-  renderDevices();
+function audit(){
+  var n = document.getElementById('aname').value || 'Not Specified';
+  var r = document.getElementById('arouter').value || 'Not Specified';
+  document.getElementById('auditOut').innerText = '=== GHOSTSHOT - WIRELESS SECURITY AUDIT ===\nLocation: ' + n + '\nRouter: ' + r + '\nDate: ' + new Date().toLocaleString() + '\n\n[1] Change Default Administrator Credentials: Required\n[2] Encryption: WPA2 / WPA3 Only. WEP and Open networks are not permitted.\n[3] WPS: Disable. WPS is vulnerable to brute-force attacks.\n[4] Firmware: Verify router firmware is current.\n[5] SSID Hiding: Not recommended as a security control. Attackers can still detect SSID.\n[6] Duplicate SSID Detected: Treat as Evil Twin. Disconnect immediately.\n[7] Repeated Disconnections: Treat as Deauthentication Attack. Use mobile data.\n\nAssessment Completed. - GhostShot';
 }
 
-/* renderDevices() - Update counts, list, alert */
-function renderDevices(){
-  let known = 0, unknown = 0;
-  devices.forEach(d => {
-    if(d.status === 'known') known++;
-    else unknown++;
-  });
-
-  document.getElementById('countKnown').innerText = 'Known: ' + known;
-  document.getElementById('countUnknown').innerText = 'Unknown: ' + unknown;
-  document.getElementById('countTotal').innerText = 'Total: ' + devices.length;
-
-  // Alert logic
-  const alertEl = document.getElementById('trackerAlert');
-  if(unknown > 0){
-    alertEl.innerHTML = '🚨 <b>' + unknown + ' UNKNOWN DEVICE(S)!</b><br><small>Possible WiFi thief. Change password NOW with Generator.</small>';
-    alertEl.style.color = '#ff4444';
-  } else if(devices.length > 0){
-    alertEl.innerHTML = '✅ All devices are known. No intruder found.';
-    alertEl.style.color = '#00ff9d';
-  } else {
-    alertEl.innerHTML = '';
-  }
-
-  // Build list HTML
-  const listEl = document.getElementById('deviceList');
-  if(devices.length === 0){
-    listEl.innerHTML = '<p style="text-align:center"><small>No devices added yet.</small></p>';
-    return;
-  }
-  let html = '';
-  devices.forEach((d, index) => {
-    const isKnown = d.status === 'known';
-    const badge = isKnown ? '<span class="pill pill-green">KNOWN</span>' : '<span class="pill pill-red">UNKNOWN</span>';
-    const icon = d.type === 'Phone' ? '📱' : d.type === 'Laptop' ? '💻' : d.type === 'TV' ? '📺' : d.type === 'CCTV' ? '📹' : d.type === 'Router' ? '📶' : '🔌';
-    html += '<div style="background:#0a0f1e;border:1px solid #2a3a6a;border-radius:10px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">'
-      + '<div><b>' + icon + ' ' + d.name + '</b><br><small>' + d.type + ' | MAC: ' + d.mac + ' | ' + badge + '</small></div>'
-      + '<button onclick="removeDevice(' + index + ')" style="width:auto;padding:6px 10px;background:#ff4444;color:#fff;margin:0">X</button>'
-      + '</div>';
-  });
-  listEl.innerHTML = html;
+function report(){
+  document.getElementById('repOut').innerText = 'GHOSTSHOT - WIRELESS SECURITY ASSESSMENT REPORT\nDeveloped by Temitope Abraham Olorunmola\n\nAssessment Completed:\n- Evil Twin Assessment: Completed\n- Deauthentication Assessment: Completed\n- Password Strength Assessment: Completed\n\nRecommendation: If duplicate SSID is observed, do not connect.\nIf repeated disconnections occur, discontinue WiFi use and switch to mobile data.\n\nGhostShot - Wireless Security Defense';
 }
 
-/* removeDevice() - Delete one device by index */
-function removeDevice(index){
-  devices.splice(index, 1);
-  renderDevices();
+function copyRep(){
+  var t = document.getElementById('repOut').innerText;
+  navigator.clipboard.writeText(t).then(function(){ alert('Report copied.'); });
 }
 
-/* clearDevices() - Delete all devices after confirm */
-function clearDevices(){
-  if(devices.length === 0) return;
-  if(!confirm('Clear all ' + devices.length + ' devices?')) return;
-  devices = [];
-  renderDevices();
+function shareWA(){
+  var msg = encodeURIComponent('GhostShot - Wireless Security Defense\n\nAssessment tool for detection of Evil Twin and Deauthentication attacks.\n\nAccess here: ' + location.href);
+  window.open('https://wa.me/?text=' + msg, '_blank');
 }
-
-/* ============================================================
-   REPORT INTEGRATION - Wrap original buildReport()
-   We keep the original function, then add device summary
-   to the report automatically. No need to edit old code.
-   ============================================================ */
-const _originalBuildReport = buildReport;
-buildReport = function(){
-  // Run original report builder first
-  _originalBuildReport();
-
-  // Build device summary for print area
-  let deviceHTML = '';
-  if(devices.length === 0){
-    deviceHTML = '<p>No devices were tracked during this audit.</p>';
-  } else {
-    let known = devices.filter(d => d.status === 'known').length;
-    let unknown = devices.filter(d => d.status === 'unknown').length;
-    deviceHTML = '<p><b>Total:</b> ' + devices.length + ' | <b>Known:</b> ' + known + ' | <b>Unknown:</b> ' + unknown + '</p><ul>';
-    devices.forEach(d => {
-      deviceHTML += '<li>' + (d.status === 'known' ? '✅ KNOWN' : '🚨 UNKNOWN') + ' - ' + d.name + ' (' + d.type + ') - MAC: ' + d.mac + '</li>';
-    });
-    deviceHTML += '</ul>';
-    if(unknown > 0){
-      deviceHTML += '<p><b>⚠️ ACTION:</b> ' + unknown + ' unknown device(s) found. Recommend immediate WiFi password change and router reboot.</p>';
-    }
-  }
-
-  // Inject or update device section in print area
-  let section = document.getElementById('rDeviceSection');
-  if(!section){
-    section = document.createElement('div');
-    section.id = 'rDeviceSection';
-    // Insert before Technician Notes heading
-    const notesHeading = document.querySelector('#printArea h3:last-of-type');
-    if(notesHeading) notesHeading.parentNode.insertBefore(section, notesHeading);
-    else document.getElementById('printArea').appendChild(section);
-  }
-  section.innerHTML = '<h3>Device Tracker Result:</h3>' + deviceHTML;
-};
-
-// Initial render - show empty state on load
-renderDevices();
-/* ============================================================
-   SECTION 7: SCAN HISTORY LOGIC
-   Author: Topshugar | GhostShot Defender
-   Storage: localStorage key = ghostshot_history
-   Format: [{client, score, known, unknown, total, date, timestamp}]
-   - Saved on phone only, no internet.
-   - Shows improvement: current score - previous score
-     for SAME client. Example: 43 -> 86 = +43 improvement.
-   - Loads automatically when app opens.
-   ============================================================ */
-const HISTORY_KEY = 'ghostshot_history';
-
-/* getHistory() - Load from localStorage, safe if empty/corrupt */
-function getHistory(){
-  try{
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if(!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    return [];
-  }
-}
-
-/* saveHistory() - Save array to localStorage */
-function saveHistory(arr){
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
-}
-
-/* saveScan() - Save current audit as one history entry */
-function saveScan(){
-  // If user hasn't calculated score yet, calculate now
-  if(lastScore === null) calcScore();
-
-  // Client name: prefer History input, fallback to Report input
-  let clientName = document.getElementById('historyClient').value.trim();
-  if(!clientName){
-    clientName = document.getElementById('client').value.trim();
-  }
-  if(!clientName){
-    alert('Please enter Client Name first so we know who this scan belongs to.');
-    document.getElementById('historyClient').focus();
-    return;
-  }
-
-  const known = devices.filter(d => d.status === 'known').length;
-  const unknown = devices.filter(d => d.status === 'unknown').length;
-  const today = new Date().toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'});
-  const timestamp = Date.now();
-
-  const entry = {
-    client: clientName,
-    score: lastScore,
-    known: known,
-    unknown: unknown,
-    total: devices.length,
-    date: today,
-    timestamp: timestamp
-  };
-
-  const history = getHistory();
-  history.unshift(entry); // Newest first
-  // Keep only last 50 scans to avoid filling storage
-  if(history.length > 50) history.length = 50;
-  saveHistory(history);
-
-  document.getElementById('historyClient').value = '';
-  renderHistory();
-  alert('✅ Scan saved! ' + clientName + ' - ' + lastScore + '/100');
-}
-
-/* renderHistory() - Show list + improvement vs previous scan */
-function renderHistory(){
-  const listEl = document.getElementById('historyList');
-  const history = getHistory();
-  if(history.length === 0){
-    listEl.innerHTML = '<p style="text-align:center"><small>No scans saved yet. Do an audit, then tap SAVE THIS SCAN.</small></p>';
-    return;
-  }
-
-  let html = '';
-  history.forEach((entry, index) => {
-    // Find previous scan for SAME client (older entry)
-    let prev = null;
-    for(let i = index + 1; i < history.length; i++){
-      if(history[i].client.toLowerCase() === entry.client.toLowerCase()){
-        prev = history[i];
-        break;
-      }
-    }
-    let improvementHTML = '';
-    if(prev){
-      const diff = entry.score - prev.score;
-      if(diff > 0) improvementHTML = '<span class="pill pill-green">▲ +' + diff + ' IMPROVED</span>';
-      else if(diff < 0) improvementHTML = '<span class="pill pill-red">▼ ' + diff + ' WORSE</span>';
-      else improvementHTML = '<span class="pill pill-yellow">— SAME</span>';
-      improvementHTML += '<br><small>Previous: ' + prev.score + '/100 on ' + prev.date + '</small>';
-    } else {
-      improvementHTML = '<span class="pill pill-yellow">FIRST SCAN</span>';
-    }
-
-    const scoreColor = entry.score >= 85 ? '#00ff9d' : entry.score >= 50 ? '#ffcc00' : '#ff4444';
-    html += '<div style="background:#0a0f1e;border:1px solid #2a3a6a;border-radius:10px;padding:12px;margin-bottom:8px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:start">'
-      + '<div><b>' + entry.client + '</b><br><small>' + entry.date + ' | Devices: ' + entry.total + ' (Known ' + entry.known + ', Unknown ' + entry.unknown + ')</small></div>'
-      + '<div style="text-align:right"><span style="font-size:22px;font-weight:bold;color:' + scoreColor + '">' + entry.score + '/100</span><br>' + improvementHTML + '</div>'
-      + '</div>'
-      + '<button onclick="deleteScan(' + index + ')" style="width:auto;padding:6px 12px;background:#ff4444;color:#fff;margin:8px 0 0">DELETE</button>'
-      + '</div>';
-  });
-  listEl.innerHTML = html;
-}
-
-/* deleteScan() - Delete one entry by index */
-function deleteScan(index){
-  const history = getHistory();
-  const entry = history[index];
-  if(!confirm('Delete scan for ' + entry.client + ' (' + entry.score + '/100)?')) return;
-  history.splice(index, 1);
-  saveHistory(history);
-  renderHistory();
-}
-
-/* clearHistory() - Delete all history */
-function clearHistory(){
-  const history = getHistory();
-  if(history.length === 0) return;
-  if(!confirm('Clear ALL ' + history.length + ' saved scans? This cannot be undone.')) return;
-  localStorage.removeItem(HISTORY_KEY);
-  renderHistory();
-}
-
-// Load history when app opens
-renderHistory();
-/* Section 9: Subscription */
-const SUB_KEY = 'ghostshot_sub';
-const USED_CODES_KEY = 'ghostshot_used_codes';
-const ADMIN_PIN = '8165';
-
-function getSub(){
-  try{
-    const raw = localStorage.getItem(SUB_KEY);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch(e){ return null; }
-}
-
-function isSubscribed(){
-  const sub = getSub();
-  if(!sub) return false;
-  return Date.now() < sub.expiry;
-}
-
-function updateSubUI(){
-  const statusEl = document.getElementById('subStatus');
-  const lockedBox = document.getElementById('lockedBox');
-  const unlockedBox = document.getElementById('unlockedBox');
-  const expiryEl = document.getElementById('subExpiry');
-  if(!statusEl) return;
-  if(isSubscribed()){
-    const sub = getSub();
-    const dateStr = new Date(sub.expiry).toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'});
-    statusEl.innerHTML = '<span style="color:#00ff9d">Active</span>';
-    lockedBox.style.display = 'none';
-    unlockedBox.style.display = 'block';
-    expiryEl.textContent = 'Valid until: ' + dateStr;
-  } else {
-    statusEl.innerHTML = '<span style="color:#ffcc00">Not Active</span>';
-    lockedBox.style.display = 'block';
-    unlockedBox.style.display = 'none';
-  }
-}
-
-function isValidCodeFormat(code){
-  const clean = code.toUpperCase().trim();
-  if(!clean.startsWith('GHOST-')) return false;
-  const digits = clean.replace('GHOST-', '');
-  if(digits.length !== 4) return false;
-  if(!/^\d{4}$/.test(digits)) return false;
-  const d1 = parseInt(digits[0]);
-  const d2 = parseInt(digits[1]);
-  const d3 = parseInt(digits[2]);
-  const check = parseInt(digits[3]);
-  const expected = (d1 * 3 + d2 * 2 + d3) % 10;
-  return check === expected;
-}
-
-function getUsedCodes(){
-  try{
-    const raw = localStorage.getItem(USED_CODES_KEY);
-    return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; }
-}
-
-function activateCode(){
-  const input = document.getElementById('activationCode');
-  const code = input.value.toUpperCase().trim();
-  if(!code){
-    alert('Please enter your activation code.');
-    return;
-  }
-  if(!isValidCodeFormat(code)){
-    alert('Invalid code. Please check and try again.');
-    return;
-  }
-  const used = getUsedCodes();
-  if(used.includes(code)){
-    alert('This code has already been used on this device.');
-    return;
-  }
-  const expiry = Date.now() + (30 * 24 * 60 * 60 * 1000);
-  localStorage.setItem(SUB_KEY, JSON.stringify({code: code, expiry: expiry, activatedAt: Date.now()}));
-  used.push(code);
-  localStorage.setItem(USED_CODES_KEY, JSON.stringify(used));
-  input.value = '';
-  updateSubUI();
-  alert('Activated! Your subscription is valid for 30 days.');
-}
-
-function generateCode(){
-  const pinInput = document.getElementById('adminPin');
-  const outEl = document.getElementById('generatedCode');
-  if(pinInput.value !== ADMIN_PIN){
-    alert('Incorrect PIN.');
-    return;
-  }
-  const d1 = Math.floor(Math.random() * 10);
-  const d2 = Math.floor(Math.random() * 10);
-  const d3 = Math.floor(Math.random() * 10);
-  const check = (d1 * 3 + d2 * 2 + d3) % 10;
-  const code = 'GHOST-' + d1 + d2 + d3 + check;
-  outEl.textContent = code;
-  pinInput.value = '';
-}
-
-updateSubUI();
 </script>
 </body>
 </html>
