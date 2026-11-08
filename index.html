@@ -181,6 +181,38 @@
   <button class="secondary" onclick="clearHistory()">CLEAR ALL HISTORY</button>
   <small>Saved on this phone only. If you clear browser data, history will be lost. Export via Report for permanent record.</small>
 </div>
+<!-- Section 9: Subscription -->
+<div class="card no-print" style="text-align:center;border:2px solid #00ff9d">
+  <h2>9. Monthly Subscription 🔓</h2>
+  <p id="subStatus"><small>Checking subscription...</small></p>
+
+  <!-- Subscription Activation -->
+  <div id="lockedBox">
+    <p><b>🔒 Monthly Check is LOCKED</b><br><small>Pay ₦3,000 via OPay to 08165043865, then enter your code below.</small></p>
+    <input type="text" id="activationCode" placeholder="Enter Code e.g. GHOST-1234" style="text-transform:uppercase">
+    <button onclick="activateCode()" style="background:#00ff9d;color:#000">ACTIVATE MY 30 DAYS</button>
+    <a href="https://wa.me/2348165043865?text=Hello%20Topshugar%2C%20I%20paid%20for%20Monthly%20Check.%20Send%20me%20my%20code." target="_blank" style="display:block;background:#25D366;color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-weight:bold;margin-top:10px">
+      💬 I HAVE PAID - SEND MY CODE
+    </a>
+  </div>
+
+  <!-- Active Subscription -->
+  <div id="unlockedBox" style="display:none">
+    <p style="color:#00ff9d;font-weight:bold">✅ SUBSCRIBED - You Are Protected</p>
+    <p id="subExpiry"></p>
+    <p><small>Your History + Monthly Checks are unlocked.</small></p>
+  </div>
+
+  <!-- Admin -->
+  <details style="margin-top:15px;text-align:left;background:#0a0f1e;padding:10px;border-radius:10px">
+    <summary style="cursor:pointer"><b>🔧 Admin</b></summary>
+    <p><small>Authorized access only.</small></p>
+    <input type="password" id="adminPin" placeholder="Admin PIN">
+    <button onclick="generateCode()" style="background:#6a00ff">GENERATE NEW CODE</button>
+    <p id="generatedCode" style="font-weight:bold;color:#00ff9d"></p>
+    <small>Copy the code and send it to the client on WhatsApp.</small>
+  </details>
+</div>
 
 <!-- PRINT AREA - Hidden on screen, visible only when printing -->
 <div id="printArea" class="hidden">
