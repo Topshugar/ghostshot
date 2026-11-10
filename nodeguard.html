@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NodeGuard - Is Your Bitcoin Node Exposed? | Check RPC 8332 Misconfiguration</title>
+<meta name="description" content="Free NodeGuard tool. Check if your Bitcoin node RPC port 8332 is exposed, if rpcallowip is open to internet, and if your bitcoin.conf is misconfigured.">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#07090f;color:#e8ecf1;padding:20px}
+.wrap{max-width:720px;margin:0 auto}
+.logo{font-size:28px;font-weight:900;letter-spacing:-1px}
+.logo span{color:#f7931a}.tag{color:#9aa7b8;margin:6px 0 20px}
+.card{background:#11151f;border:1px solid #1f2733;border-radius:16px;padding:18px;margin-bottom:14px}
+h2{margin:0 0 10px;font-size:18px} p{color:#aeb9c6;line-height:1.6;font-size:14px}
+textarea{width:100%;min-height:200px;background:#07090f;color:#d6ffe0;border:1px solid #263142;border-radius:12px;padding:12px;font-family:monospace;font-size:13px;outline:none}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:#f7931a;color:#000;font-weight:800;font-size:16px;cursor:pointer;margin-top:12px}
+button:hover{opacity:.9}
+.result{margin-top:14px;padding:14px;border-radius:12px;display:none}
+.safe{background:#0f2a1a;border:1px solid #1f9d55}.warn{background:#2a1a0f;border:1px solid #ff8a00}.danger{background:#2a0f0f;border:1px solid #ff3b3b}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800;margin-bottom:8px}
+.check{padding:10px 0;border-bottom:1px solid #1f2733;font-size:14px}.check:last-child{border:0}
+.good{color:#2ecc71}.bad{color:#ff5c5c}.info{color:#f7931a}
+code{background:#000;padding:2px 6px;border-radius:6px;font-size:12px}
+.small{font-size:12px;color:#7c8a9c}.footer{text-align:center;color:#5a6a7d;font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="logo">🛡️ NODE<span>GUARD</span></div>
+<div class="tag">Is your Bitcoin Node exposed? Check your <b>bitcoin.conf</b> before hackers do. 100% offline — nothing leaves your browser.</div>
+
+<div class="card">
+<h2>1. Paste your bitcoin.conf</h2>
+<p><b>IMPORTANT:</b> Delete your <code>rpcpassword=...</code> value before pasting. Replace it with <code>rpcpassword=***</code>. We don't need your real password to check if you're exposed.</p>
+<textarea id="conf" placeholder="Example:
+# bitcoin.conf
+rpcbind=127.0.0.1
+rpcallowip=127.0.0.1
+rpcuser=myuser
+rpcpassword=***
+server=1
+daemon=1
+"></textarea>
+<button onclick="check()">🔍 CHECK MY NODE</button>
+<div id="result" class="result"></div>
+</div>
+
+<div class="card">
+<h2>2. What we check</h2>
+<p><b>• rpcbind / rpcallowip:</b> If it's <code>0.0.0.0</code> or <code>0.0.0.0/0</code>, anyone on internet can try your RPC.<br>
+<b>• server=1:</b> If missing, RPC is off (safe but node won't work for wallet).<br>
+<b>• rpcuser / rpcpassword:</b> If missing or too short, auth is weak.<br>
+<b>• testnet:</b> If you're on mainnet with RPC open, risk is CRITICAL.</p>
+</div>
+
+<div class="card">
+<h2>3. How to fix if EXPOSED</h2>
+<p>Copy this safe config:</p>
+<p><code>rpcbind=127.0.0.1<br>rpcallowip=127.0.0.1<br>rpcuser=change-this-user<br>rpcpassword=change-this-to-32-random-chars<br>server=1<br>daemon=1</code></p>
+<p>Then restart: <code>bitcoin-cli stop && bitcoind -daemon</code></p>
+<p class="small">Also check firewall: Port 8332 should be CLOSED from outside. Port 8333 can be OPEN if you want to be a public node.</p>
+</div>
+
+<div class="footer">NodeGuard by GhostShot • For educational / defensive use only • Check YOUR OWN node</div>
+</div>
+
+<script>
+function check(){
+  let text = document.getElementById('conf').value.toLowerCase();
+  let box = document.getElementById('result');
+  box.style.display='block';
+  if(!text.trim()){ box.className='result warn'; box.innerHTML='Paste your bitcoin.conf first.'; return; }
+
+  let issues = [];
+  let score = 100;
+
+  // Check rpcbind
+  let rpcbindBad = text.includes('rpcbind=0.0.0.0');
+  let allowAll = text.includes('rpcallowip=0.0.0.0') || text.includes('rpcallowip=0.0.0.0/0') || text.includes('rpcallowip=*');
+  let allowLocal = text.includes('rpcallowip=127.0.0.1');
+  let hasRpcUser = text.includes('rpcuser=');
+  let hasRpcPass = text.includes('rpcpassword=');
+  let hasServer = text.includes('server=1');
+  let isTestnet = text.includes('testnet=1') || text.includes('chain=test');
+  let isMainnet = !isTestnet;
+
+  if(rpcbindBad){ issues.push('❌ <b>rpcbind=0.0.0.0</b> — Your RPC is listening on ALL interfaces. Anyone can find it.'); score-=40; }
+  else if(text.includes('rpcbind=127.0.0.1')){ issues.push('✅ <b>rpcbind=127.0.0.1</b> — Good. RPC only on localhost.'); }
+  else { issues.push('⚠️ <b>rpcbind not set</b> — Defaults to localhost, but set it explicitly to be safe.'); score-=5; }
+
+  if(allowAll){ issues.push('❌ <b>rpcallowip=0.0.0.0</b> — You allowed the WHOLE internet to try your RPC. Critical!'); score-=40; }
+  else if(allowLocal){ issues.push('✅ <b>rpcallowip=127.0.0.1</b> — Good. Only your own computer can use RPC.'); }
+  else { issues.push('⚠️ <b>rpcallowip not set</b> — Set it to 127.0.0.1 explicitly.'); score-=5; }
+
+  if(!hasRpcUser || !hasRpcPass){ issues.push('❌ <b>Missing rpcuser / rpcpassword</b> — RPC auth is not set. Attacker can try without password.'); score-=20; }
+  else { issues.push('✅ <b>RPC auth present</b> — rpcuser + rpcpassword found. Make sure password is 20+ random chars.'); }
+
+  if(!hasServer){ issues.push('ℹ️ <b>server=0 or missing</b> — RPC server is off. Safe, but wallet RPC won\'t work.'); }
+  else { issues.push('✅ <b>server=1</b> — RPC server enabled.'); }
+
+  if(isTestnet){ issues.push('ℹ️ <b>Testnet detected</b> — Good for testing. Even if exposed, no real BTC at risk.'); }
+  else { issues.push('⚠️ <b>Mainnet detected</b> — Real BTC at risk if exposed. Fix immediately.'); }
+
+  let verdict, cls;
+  if(score >= 90){ verdict='SAFE ✅'; cls='safe'; }
+  else if(score >= 60){ verdict='WARNING ⚠️ — Fixable Misconfiguration'; cls='warn'; }
+  else { verdict='EXPOSED ❌ — CRITICAL RISK'; cls='danger'; }
+
+  let html = `<div class="badge" style="background:#000;color:#fff">${verdict} | Score: ${score}/100</div>`;
+  issues.forEach(i => html += `<div class="check">${i}</div>`);
+  if(score < 90) html += `<p style="margin-top:12px"><b>Fix now:</b> Set rpcbind=127.0.0.1, rpcallowip=127.0.0.1, use strong rpcpassword, close port 8332 in firewall, restart node.</p>`;
+  else html += `<p style="margin-top:12px">Your config looks locked down. Still verify firewall: <code>nmap -p 8332 YOUR-IP</code> should show filtered/closed.</p>`;
+  box.className='result '+cls;
+  box.innerHTML=html;
+}
+</script>
+</body>
+</html>
